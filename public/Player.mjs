@@ -1,3 +1,5 @@
+import { dimensions } from "./gameCanvas.mjs";
+
 class Player {
   constructor({ x, y, score = 0, id }) {
     this.x = x;
@@ -6,15 +8,21 @@ class Player {
     this.id = id;
   }
 
-  movePlayer(dir, speed) {
+  draw() {
+    const ctx = dimensions.context;
+    ctx.fillStyle = "green";
+    ctx.fillRect(this.x, this.y, 12, 12);
+  }
+
+  movePlayer(dir, speed = 10) {
     // set direction based on key control
-    const directionKeyMap = { w: "up", a: "left", s: "down", d: "right" }[dir];
-    // move based on direction map
+    const directionKeyMap = { w: "up", s: "down", a: "left", d: "right" }[dir];
+    // move and limit coordinates based on direction map
     const movement = {
-      up: this.y + speed,
-      right: this.x + speed,
-      down: this.y - speed,
-      left: this.x - speed,
+      up: Math.max(dimensions.minY, this.y - speed),
+      down: Math.min(dimensions.maxY - speed, this.y + speed),
+      left: Math.max(dimensions.minX, this.x - speed),
+      right: Math.min(dimensions.maxX - speed, this.x + speed),
     }[directionKeyMap];
     // set appropriate axis
     if (directionKeyMap == "up" || directionKeyMap == "down") {
