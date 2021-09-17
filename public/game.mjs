@@ -2,16 +2,11 @@ import { dimensions, arena } from "./gameCanvas.mjs";
 import Player from "./Player.mjs";
 import Collectible from "./Collectible.mjs";
 
-const socket = io();
-let allPlayers = [];
-
+//helpers
+let speed = 10;
 const randomCoordinate = (min, max) => {
   return Math.floor(Math.random() * max) + min;
 };
-
-// defaults
-const movementKeys = ["w", "a", "s", "d"];
-let speed = 10;
 const localPlayer = new Player({
   x: randomCoordinate(dimensions.minX, dimensions.maxX - speed),
   y: randomCoordinate(dimensions.minY, dimensions.maxY - speed),
@@ -24,100 +19,86 @@ let goal = new Collectible({
   id: Date.now(),
 });
 
+// defaults
+const socket = io();
+const movementKeys = ["w", "a", "s", "d"];
+
+let allPlayers = [];
+
 const init = () => {
   arena.drawCanvas();
-  goal.draw();
-  localPlayer.draw();
+  window.requestAnimationFrame(updateGame);
 };
 
 // attach event listener for controls
 document.addEventListener("keypress", function (event) {
   if (movementKeys.includes(event.key)) {
     localPlayer.movePlayer(event.key, speed);
-    socket.emit("updatePlayers", { allPlayers, localPlayer });
+    window.requestAnimationFrame(updateGame);
+    socket.emit("updateServerPlayers", { allPlayers, localPlayer, goal });
+    console.log(allPlayers);
   }
 });
 
-// const getCurrentCollectible = () => {
-//   socket.emit("updateGoal", goal);
-//   socket.on("syncGoal", (syncedGoal) => {
-//     goal = new Collectible(syncedGoal);
-//     socket.emit("updateGoal", goal);
-//   });
-//   goal.draw();
-// };
+const syncNewPlayer = () => {
+  // arena.clearCanvas();
+  // arena.drawCanvas();
+  // getCurrentCollectible();
 
-// const syncNewPlayer = () => {
-//   arena.clearCanvas();
-//   arena.drawCanvas();
-//   getCurrentCollectible();
+  allPlayers.forEach((playerData) => {
+    const player = new Player(playerData);
+    player.draw();
+  });
 
-//   allPlayers.forEach((player) => {
-//     // if (player.id !== localPlayer.id) {
-//     player.draw();
-//     // }
-//   });
-// };
+  window.requestAnimationFrame(updateGame);
+};
 
-// attach event listener for controls
-// document.addEventListener("keypress", function (event) {
-//   if (movementKeys.includes(event.key)) {
-//     localPlayer.movePlayer(event.key, speed);
-//     updateGame(localPlayer);
-//     socket.emit("updatePlayers", { allPlayers, localPlayer });
-//   }
-// });
+const updateGame = () => {
+  arena.clearCanvas();
+  arena.drawCanvas();
 
-// const updateGame = (player) => {
-//   const runUpdate = () => {
-//     goal.draw();
-//     player.draw();
+  if (localPlayer.collision(goal)) {
+    arena.clearCanvas();
+    arena.drawCanvas();
 
-//     if (player.collision(goal)) {
-//       arena.clearCanvas();
-//       arena.drawCanvas();
+    const winningPlayer = allPlayers.findIndex((p) => p.id == localPlayer.id);
+    allPlayers[winningPlayer].score = localPlayer.score;
+    console.log(allPlayers);
 
-//       const winningPlayer = allPlayers.findIndex((p) => p.id == player.id);
-//       allPlayers[winningPlayer].score = player.score;
-//       console.log(allPlayers);
-//       socket.emit("updatePlayers", { allPlayers, localPlayer: player });
-//       goal = new Collectible({
-//         x: randomCoordinate(dimensions.minX, dimensions.maxX - speed),
-//         y: randomCoordinate(dimensions.minY, dimensions.maxY - speed),
-//         id: Date.now(),
-//       });
-//       // getCurrentCollectible();
-//     }
-//   };
+    goal = new Collectible({
+      x: randomCoordinate(dimensions.minX, dimensions.maxX - speed),
+      y: randomCoordinate(dimensions.minY, dimensions.maxY - speed),
+      id: Date.now(),
+    });
+    socket.emit("updateServerPlayers", { allPlayers, localPlayer, goal });
+  }
 
-//   arena.clearCanvas();
-//   arena.drawCanvas();
-//   player.calculateRank(allPlayers);
-//   window.requestAnimationFrame(runUpdate);
-//   // setTimeout(() => player.draw(), 0);
-// };
+  localPlayer.calculateRank(allPlayers);
+  // setTimeout(() => player.draw(), 0);
+};
 
-// socket.on("updateAllPlayers", (data) => {
-//   allPlayers = data.allPlayers;
-//   allPlayers.forEach((player) => {
-//     // if (player.id !== localPlayer.id) {
-//     const p = new Player(player);
-//     updateGame(p);
-//     // }
-//   });
-// });
+socket.on("updateClientPlayers", (data) => {
+  arena.clearCanvas();
+  arena.drawCanvas();
+  allPlayers = data.allPlayers;
+  goal = new Collectible(data.goal);
+  goal.draw();
+  allPlayers.forEach((player) => {
+    const p = new Player(player);
+    p.draw();
+  });
+});
 
-// socket.on("connected", (connected) => {
-//   if (connected.connections < 2) {
-//     init();
-//   } else {
-//     syncNewPlayer();
-//     console.log(goal);
-//   }
-//   socket.emit("init", { allPlayers, localPlayer });
-//   console.log(`${connected.msg}, Currently ${connected.connections} player(s)`);
-// });
+socket.on("connected", (connected) => {
+  if (connected.connections < 2) {
+    init();
+  } else {
+    syncNewPlayer();
+  }
+  socket.emit("init", { allPlayers, localPlayer });
+  console.log(`${connected.msg}, Currently ${connected.connections} player(s)`);
+});
 
-// socket.on("disconnected", (connected) => {
-//   console.log(`${connected.msg}, Currently ${connected.connections} player(s)`);
-// });
+socket.on("disconnected", (connected) => {
+  console.log(`${connected.msg}, Currently ${connected.connections} player(s)`);
+});

@@ -49,6 +49,7 @@ const server = app.listen(portNum, () => {
 const connections = [];
 const io = socket(server);
 let allPlayers = [];
+let goal = {};
 
 io.sockets.on("connection", (socket) => {
   connections.push(socket);
@@ -72,9 +73,11 @@ io.sockets.on("connection", (socket) => {
     ) {
       allPlayers.push(data.localPlayer);
     }
+    io.emit("updateClientPlayers", { allPlayers, goal });
   });
 
-  socket.on("updatePlayers", (data) => {
+  socket.on("updateServerPlayers", (data) => {
+    goal = data.goal;
     // get index of player who triggered update
     const player = allPlayers.findIndex(
       (player) => player.id == data.localPlayer.id
@@ -82,14 +85,15 @@ io.sockets.on("connection", (socket) => {
     // update player by index
     allPlayers[player].x = data.localPlayer.x;
     allPlayers[player].y = data.localPlayer.y;
+    allPlayers[player].score = data.localPlayer.score;
 
-    io.emit("updateAllPlayers", { allPlayers });
+    io.emit("updateClientPlayers", { allPlayers, goal });
   });
 
-  socket.on("updateGoal", (data) => {
-    // console.log(data);
-    io.emit("syncGoal", data);
-  });
+  // socket.on("updateGoal", (data) => {
+  //   // console.log(data);
+  //   io.emit("syncGoal", data);
+  // });
 
   // remove player from list of all players by associated the socket id
   socket.on("disconnect", () => {
