@@ -46,9 +46,57 @@ const server = app.listen(portNum, () => {
   }
 });
 
+const connections = [];
 const io = socket(server);
-io.on("connection", (socket) => {
-  console.log(socket);
+let allPlayers = [];
+
+io.sockets.on("connection", (socket) => {
+  connections.push(socket);
+
+  io.emit("connected", {
+    msg: `Connected ${socket.id}`,
+    connections: connections.length,
+  });
+
+  // add player to list of allPlayers
+  socket.on("init", (data) => {
+    // and associate the socket id
+    data.localPlayer.socketId = socket.id;
+    // only if they aren't in the list of allPlayers
+    if (
+      !allPlayers.includes(
+        allPlayers.find(
+          (player) => player.socketId === data.localPlayer.socketId
+        )
+      )
+    ) {
+      allPlayers.push(data.localPlayer);
+    }
+  });
+
+  socket.on("updatePlayers", (data) => {
+    // get index of player who triggered update
+    const player = allPlayers.findIndex(
+      (player) => player.id == data.localPlayer.id
+    );
+    // update player by index
+    allPlayers[player].x = data.localPlayer.x;
+    allPlayers[player].y = data.localPlayer.y;
+
+    io.emit("updateAllPlayers", { allPlayers });
+    // console.log(allPlayers);
+  });
+
+  // remove player from list of all players by associated the socket id
+  socket.on("disconnect", () => {
+    connections.splice(connections.indexOf(socket), 1);
+    allPlayers = allPlayers.filter((player) => player.socketId !== socket.id);
+    io.emit("updateAllPlayers", { allPlayers });
+    socket.broadcast.emit("disconnected", {
+      msg: `${socket.id} disconnected`,
+      connections: connections.length,
+    });
+  });
 });
 
 module.exports = app; // For testing

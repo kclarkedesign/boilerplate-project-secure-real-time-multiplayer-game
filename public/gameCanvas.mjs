@@ -1,7 +1,6 @@
+// setup canvas
 const canvas = document.getElementById("game-window");
 const context = canvas.getContext("2d");
-
-// setup canvas
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
 

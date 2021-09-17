@@ -30,10 +30,12 @@ class Player {
     } else {
       this.x = movement;
     }
-    console.log(`${this.x}, ${this.y}`);
+    // console.log(`${this.x}, ${this.y}`);
   }
 
-  collision(item) {}
+  collision(item) {
+    console.log(item);
+  }
 
   calculateRank(arr) {}
 }
