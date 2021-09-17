@@ -84,7 +84,11 @@ io.sockets.on("connection", (socket) => {
     allPlayers[player].y = data.localPlayer.y;
 
     io.emit("updateAllPlayers", { allPlayers });
-    // console.log(allPlayers);
+  });
+
+  socket.on("updateGoal", (data) => {
+    // console.log(data);
+    io.emit("syncGoal", data);
   });
 
   // remove player from list of all players by associated the socket id

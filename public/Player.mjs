@@ -1,17 +1,18 @@
 import { dimensions } from "./gameCanvas.mjs";
 
 class Player {
-  constructor({ x, y, score = 0, id }) {
+  constructor({ x, y, score = 0, id }, size = 10) {
     this.x = x;
     this.y = y;
     this.score = score;
     this.id = id;
+    this.size = size;
   }
 
   draw() {
     const ctx = dimensions.context;
     ctx.fillStyle = "green";
-    ctx.fillRect(this.x, this.y, 12, 12);
+    ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 
   movePlayer(dir, speed = 10) {
@@ -34,10 +35,27 @@ class Player {
   }
 
   collision(item) {
-    console.log(item);
+    const xCollision = !(
+      this.x > item.x + item.size || this.x + this.size < item.x
+    );
+    const yCollision = !(
+      this.y > item.y + item.size || this.y + this.size < item.y
+    );
+    // if collision
+    if (xCollision && yCollision) {
+      this.score = this.score + 1;
+      return true;
+    }
+    return false;
   }
 
-  calculateRank(arr) {}
+  calculateRank(arr) {
+    const totalPlayers = arr.length;
+    const rankedListings = arr.sort((a, b) => (a.score > b.score ? 1 : -1));
+    const currentRanking = rankedListings.findIndex((p) => p.id == this.id) + 1;
+
+    return `Rank: ${currentRanking}/${totalPlayers}`;
+  }
 }
 
 export default Player;
