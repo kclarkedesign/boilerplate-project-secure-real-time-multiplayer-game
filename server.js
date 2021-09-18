@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const helmet = require("helmet");
 const bodyParser = require("body-parser");
 const expect = require("chai");
 const socket = require("socket.io");
@@ -8,6 +9,20 @@ const fccTestingRoutes = require("./routes/fcctesting.js");
 const runner = require("./test-runner.js");
 
 const app = express();
+// security
+app.use(helmet.noSniff());
+app.use(helmet.xssFilter());
+app.use(function (req, res, next) {
+  res.setHeader("surrogate-control", "no-store");
+  res.setHeader(
+    "cache-control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
+  res.setHeader("pragma", "no-cache");
+  res.setHeader("expires", "0");
+  res.setHeader("X-Powered-By", "PHP 7.4.3");
+  next();
+});
 
 app.use("/public", express.static(process.cwd() + "/public"));
 app.use("/assets", express.static(process.cwd() + "/assets"));
