@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Information Security 5: Secure Real-Time Multiplayer Game",
   "main": "server.js",
+  "homepage": "https://kclarkedesign.github.io/secure-real-time-multiplayer-game",
   "scripts": {
     "start": "nodemon server.js",
     "test": "PORT=3005 mocha --require @babel/register --recursive --exit --ui tdd tests/",
-    "test-win": "SET PORT=3005 mocha --require @babel/register --recursive --exit --ui tdd tests/"
+    "test-win": "SET PORT=3005 mocha --require @babel/register --recursive --exit --ui tdd tests/",
+    "build-gh-pages": "npm run build && gh-pages -d build"
   },
   "dependencies": {
     "@babel/core": "^7.7.5",
