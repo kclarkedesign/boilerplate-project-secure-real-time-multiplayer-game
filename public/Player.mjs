@@ -1,17 +1,18 @@
-import { dimensions } from "./gameCanvas.mjs";
+import { dimensions, arena } from "./gameCanvas.mjs";
 
 class Player {
-  constructor({ x, y, score = 0, id }, size = 10) {
+  constructor({ x, y, score = 0, id, local = false }, size = 10) {
     this.x = x;
     this.y = y;
     this.score = score;
     this.id = id;
     this.size = size;
+    this.local = local;
   }
 
   draw() {
     const ctx = dimensions.context;
-    ctx.fillStyle = "green";
+    ctx.fillStyle = this.local ? "green" : "purple";
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 
@@ -51,9 +52,11 @@ class Player {
 
   calculateRank(arr) {
     const totalPlayers = arr.length;
-    const rankedListings = arr.sort((a, b) => (a.score > b.score ? 1 : -1));
+    const rankedListings = arr.sort((a, b) => (a.score < b.score ? 1 : -1));
     const currentRanking = rankedListings.findIndex((p) => p.id == this.id) + 1;
-
+    const rankingText = `Rank: ${currentRanking}/${totalPlayers}`;
+    // set ranking text
+    arena.drawRank(rankingText);
     return `Rank: ${currentRanking}/${totalPlayers}`;
   }
 }

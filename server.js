@@ -77,6 +77,7 @@ io.sockets.on("connection", (socket) => {
   });
 
   socket.on("updateServerPlayers", (data) => {
+    // update goal from client
     goal = data.goal;
     // get index of player who triggered update
     const player = allPlayers.findIndex(
@@ -90,16 +91,11 @@ io.sockets.on("connection", (socket) => {
     io.emit("updateClientPlayers", { allPlayers, goal });
   });
 
-  // socket.on("updateGoal", (data) => {
-  //   // console.log(data);
-  //   io.emit("syncGoal", data);
-  // });
-
   // remove player from list of all players by associated the socket id
   socket.on("disconnect", () => {
     connections.splice(connections.indexOf(socket), 1);
     allPlayers = allPlayers.filter((player) => player.socketId !== socket.id);
-    io.emit("updateAllPlayers", { allPlayers });
+    io.emit("updateClientPlayers", { allPlayers, goal });
     socket.broadcast.emit("disconnected", {
       msg: `${socket.id} disconnected`,
       connections: connections.length,
